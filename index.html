@@ -139,6 +139,17 @@ input:focus,select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 
 .check.err{color:#C8553D}
 .check input{width:18px;height:18px;margin-top:2px;accent-color:var(--navy)}
 form .btn{width:100%;margin-top:4px}
+form .btn[disabled]{opacity:.6;cursor:wait}
+fieldset.msgr{border:0;margin:0;padding:0;min-width:0}
+fieldset.msgr legend{font-weight:600;font-size:14px;padding:0;margin-bottom:6px}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chips.err .chip span{border-color:#C8553D}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chip span{display:flex;justify-content:center;font-weight:600;font-size:15px;padding:11px 8px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);cursor:pointer;transition:background .15s ease,border-color .15s ease}
+.chip input:checked + span{background:var(--navy);border-color:var(--navy);color:#fff}
+.chip input:focus-visible + span{outline:3px solid var(--teal);outline-offset:2px}
+form .note.err{color:#C8553D}
 form .note{font-size:13px;color:var(--muted);text-align:center}
 .done{display:grid;gap:12px;text-align:center;padding:20px 0}
 .done .ok{width:56px;height:56px;border-radius:50%;background:var(--gold);margin:0 auto;display:grid;place-items:center}
@@ -303,8 +314,8 @@ footer nav{display:flex;gap:20px;flex-wrap:wrap}
     <div class="wrap">
       <div class="side">
         <span class="eyebrow" style="color:var(--gold)">Реєстрація</span>
-        <h2 id="reg-h">Залиште заявку, і ми надішлемо посилання на вебінар</h2>
-        <p>Участь безкоштовна. Напередодні нагадаємо про початок на пошту.</p>
+        <h2 id="reg-h">Залиште заявку на участь</h2>
+        <p>Участь безкоштовна. Підтвердження реєстрації надішлемо на пошту, а нагадування і посилання на трансляцію в зручний для вас месенджер.</p>
         <ul class="facts">
           <li><small>Дата</small><b>21 листопада, субота</b></li>
           <li><small>Час</small><b>17:00 за Києвом</b></li>
@@ -314,15 +325,23 @@ footer nav{display:flex;gap:20px;flex-wrap:wrap}
       <form id="form" novalidate>
         <div class="field"><label for="f-name">Ім'я та прізвище</label><input type="text" id="f-name" name="name" autocomplete="name" required></div>
         <div class="field"><label for="f-email">Електронна пошта</label><input type="email" id="f-email" name="email" autocomplete="email" required></div>
-        <div class="field"><label for="f-phone">Телефон або Telegram <small>(необов'язково)</small></label><input type="tel" id="f-phone" name="phone" autocomplete="tel"></div>
+        <fieldset class="field msgr">
+          <legend>Зручний месенджер</legend>
+          <div class="chips">
+            <label class="chip"><input type="radio" name="messenger" id="m-tg" value="Telegram"><span>Telegram</span></label>
+            <label class="chip"><input type="radio" name="messenger" id="m-vb" value="Viber"><span>Viber</span></label>
+            <label class="chip"><input type="radio" name="messenger" id="m-wa" value="WhatsApp"><span>WhatsApp</span></label>
+          </div>
+        </fieldset>
+        <div class="field"><label for="f-phone">Номер телефону в цьому месенджері</label><input type="tel" id="f-phone" name="phone" autocomplete="tel" placeholder="+380" required></div>
         <div class="field"><label for="f-role">Ваша спеціалізація</label>
           <select id="f-role" name="role" required>
             <option value="">Оберіть зі списку</option>
             <option>Психотерапевт</option><option>Психолог</option><option>Лікар-психіатр</option><option>Студент психологічного фаху</option><option>Інше</option>
           </select></div>
         <label class="check" for="f-ok"><input type="checkbox" id="f-ok" required> <span>Погоджуюся на обробку персональних даних і отримання листів про вебінар</span></label>
-        <button class="btn" type="submit">Зареєструватися безкоштовно</button>
-        <p class="note">Ми не передаємо ваші дані третім особам.</p>
+        <button class="btn" type="submit" id="send">Зареєструватися безкоштовно</button>
+        <p class="note" id="form-note">Ми не передаємо ваші дані третім особам.</p>
       </form>
     </div>
   </section>
@@ -345,7 +364,7 @@ footer nav{display:flex;gap:20px;flex-wrap:wrap}
     <span class="ok"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></span>
     <span class="pill">Ви зареєстровані</span>
     <h1 id="thanks-h">Дякуємо! Чекаємо вас на вебінарі</h1>
-    <p class="lead">Посилання на трансляцію ми надіслали на вашу пошту. Якщо листа немає, перевірте папки «Промоакції» і «Спам».</p>
+    <p class="lead">Ми отримали вашу заявку. Найближчим часом надішлемо лист із підтвердженням на вашу пошту, а перед вебінаром нагадаємо в месенджері. Якщо листа немає, перевірте папки «Промоакції» і «Спам».</p>
     <ul class="facts">
       <li><small>Дата</small><b>21 листопада, субота</b></li>
       <li><small>Час</small><b>17:00 за Києвом</b></li>
@@ -370,20 +389,56 @@ footer nav{display:flex;gap:20px;flex-wrap:wrap}
 </footer>
 
 <script>
-document.getElementById('form').addEventListener('submit', function (e) {
-  e.preventDefault();
-  var f = e.target, bad = null;
-  ['f-name', 'f-email', 'f-role'].forEach(function (id) {
-    var el = document.getElementById(id);
-    var ok = el.value.trim() && (id !== 'f-email' || /.+@.+\..+/.test(el.value));
+// Адреса веб-застосунку Google Apps Script, який пересилає заявки в Telegram-бот. Поки її немає, форма працює як демо.
+var FORM_ENDPOINT = '';
+
+function field(id) { return document.getElementById(id).value.trim(); }
+function validate() {
+  var bad = null;
+  ['f-name', 'f-email', 'f-phone', 'f-role'].forEach(function (id) {
+    var el = document.getElementById(id), v = el.value.trim();
+    var ok = v && (id !== 'f-email' || /.+@.+\..+/.test(v)) && (id !== 'f-phone' || v.replace(/\D/g, '').length >= 9);
     el.style.borderColor = ok ? '' : '#C8553D';
     if (!ok && !bad) bad = el;
   });
+  var m = document.querySelector('input[name=messenger]:checked');
+  document.querySelector('.chips').classList.toggle('err', !m);
+  if (!m && !bad) bad = document.getElementById('m-tg');
   var ok = document.getElementById('f-ok');
   ok.parentNode.classList.toggle('err', !ok.checked);
   if (!ok.checked && !bad) bad = ok;
-  if (bad) { bad.focus(); return; }
-  showThanks();
+  if (bad) { bad.focus(); return false; }
+  return true;
+}
+['f-name', 'f-email', 'f-phone', 'f-role'].forEach(function (id) {
+  var el = document.getElementById(id);
+  el.addEventListener('input', function () { el.style.borderColor = ''; });
+  el.addEventListener('change', function () { el.style.borderColor = ''; });
+});
+document.getElementById('f-ok').addEventListener('change', function () { this.parentNode.classList.remove('err'); });
+document.querySelectorAll('input[name=messenger]').forEach(function (r) {
+  r.addEventListener('change', function () { document.querySelector('.chips').classList.remove('err'); });
+});
+document.getElementById('form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (!validate()) return;
+  var data = {
+    name: field('f-name'),
+    email: field('f-email'),
+    messenger: document.querySelector('input[name=messenger]:checked').value,
+    phone: field('f-phone'),
+    role: field('f-role')
+  };
+  if (!FORM_ENDPOINT) { showThanks(); return; }
+  var btn = document.getElementById('send'), note = document.getElementById('form-note');
+  btn.disabled = true; btn.textContent = 'Надсилаємо…';
+  fetch(FORM_ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(data) })
+    .then(function () { showThanks(); })
+    .catch(function () {
+      note.classList.add('err');
+      note.textContent = 'Не вдалося надіслати заявку. Перевірте інтернет і спробуйте ще раз.';
+    })
+    .then(function () { btn.disabled = false; btn.textContent = 'Зареєструватися безкоштовно'; });
 });
 function showThanks() {
   document.querySelector('main').hidden = true;
